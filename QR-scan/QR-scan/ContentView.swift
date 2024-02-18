@@ -5,17 +5,44 @@
 //  Created by Hye Ri Kim on 2024/02/18.
 //
 
+import CoreImage.CIFilterBuiltins
+import Observation
 import SwiftUI
 
-struct ContentView: View {
-    var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+@Observable class QR {
+    var emailAddress = ""
+
+    let context = CIContext()
+    let filter = CIFilter.qrCodeGenerator()
+
+    var qrCode: Image {
+        filter.message = Data(emailAddress.utf8)
+
+        if let outputImage = filter.outputImage {
+            if let cgimg = context.createCGImage(outputImage, from: outputImage.extent) {
+                let uiImage = UIImage(cgImage: cgimg)
+                return Image(uiImage: uiImage)
+            }
         }
-        .padding()
+
+        return Image(systemName: "xmark")
+    }
+}
+
+struct ContentView: View {
+    @State private var viewModel = QR()
+
+    var body: some View {
+        Form {
+            TextField("Enter your email address", text: $viewModel.emailAddress)
+
+            Section("QR code") {
+                viewModel.qrCode
+                    .resizable()
+                    .interpolation(.none)
+                    .scaledToFit()
+            }
+        }
     }
 }
 
